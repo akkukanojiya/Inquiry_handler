@@ -1,6 +1,9 @@
 import { School2Icon, ShieldQuestion, MonitorDot , UserRoundCheck } from 'lucide-react';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const MasterDashboard = () => {
+  const navigate = useNavigate();
   const stats = [
     { icon: School2Icon, color: 'from-blue-500 to-blue-400', title: 'Colleges', value: 5 },
     { icon: ShieldQuestion, color: 'from-green-500 to-green-400', title: 'Inquiries', value: 12 },
@@ -13,8 +16,12 @@ const MasterDashboard = () => {
 //     { name: 'Engineering', students: 90, faculty: 6 },
 //     { name: 'Business', students: 150, faculty: 10 },
 //   ];
-
-
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    navigate("/masterlogin");
+  }
+}, [navigate]);
 
   return (
     <div className="space-y-8 p-6 bg-gray-100 min-h-screen">

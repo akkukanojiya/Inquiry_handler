@@ -1,217 +1,242 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CSVLink } from "react-csv";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { Copy, Download, EyeIcon, FileText, Printer, Trash2 } from "lucide-react";
+import { Copy, Download,  FileText, Printer, Trash2 } from "lucide-react";
+import axios from "axios";
+
+interface CollegeRequest {
+  _id: string;
+  collegeName: string;
+  email: string;
+  faculty: string;
+  branch: string;
+  course: string;
+}
 
 const MasterCollegeRequest = () => {
-    const data = [
-        { id: 1, name: "Aakash", role: "Admin" },
-        { id: 2, name: "Suresh", role: "Editor" },
-        { id: 3, name: "Harshil", role: "Developer" },
-        { id: 4, name: "Jaimin", role: "Developer" },
-        { id: 5, name: "Harsh", role: "BDE" },
-        { id: 6, name: "harsh", role: "intern" },
-    ];
+  const [data, setData] = useState<CollegeRequest[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-    const [currentPage, setCurrentPage] = useState(1);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [copySuccess, setCopySuccess] = useState(false);
-    const rowsPerPage = 3;
+  const rowsPerPage = 3;
+  const token = localStorage.getItem("token");
 
-    // Filter data based on search query
-    const filteredData = data.filter((item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const fetchData = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await axios.get("http://localhost:3000/masterAdmin/request", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      // Debugging: log to check what response.data is
+      console.log("API Response:", response.data);
+  
+      // Adjust this line depending on your backend response structure
+      setData(Array.isArray(response.data) ? response.data : response.data.reqCollege
+    ); 
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setError("Failed to fetch data");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
 
-    // Pagination logic
-    const indexOfLastRow = currentPage * rowsPerPage;
-    const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-    const currentRows = filteredData.slice(indexOfFirstRow, indexOfLastRow);
-    const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-    // Export handlers
-    const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(JSON.stringify(filteredData, null, 2));
-            setCopySuccess(true);
-            setTimeout(() => setCopySuccess(false), 2000);
-        } catch (err) {
-            console.error("Failed to copy data:", err);
-        }
-    };
+  const handleDelete = async (id: string) => {
+    try {
+      await axios.delete(`http://localhost:3000/masterAdmin/request/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setData((prevData) => prevData.filter((item) => item._id !== id));
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete the request.");
+    }
+  };
 
-    const exportPDF = () => {
-        try {
-            const doc = new jsPDF();
+  const filteredData = data && Array.isArray(data)
+  ? data.filter(item =>
+      item?.collegeName?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  : [];
 
-            // Add title and date
-            doc.setFontSize(16);
-            doc.text("Inquiry List", 14, 15);
-            doc.setFontSize(10);
-            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+  const indexOfLastRow = currentPage * rowsPerPage;
+  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+  const currentRows = filteredData.slice(indexOfFirstRow, indexOfLastRow);
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
-            autoTable(doc, {
-                startY: 30,
-                head: [["Sr. No.", "College Name", "Email", "Faculties", "Branches", "Courses",]],
-                body: filteredData.map((item, index) => [
-                    index + 1,
-                    "",
-                    "",
-                    "",
-                    item.name,
-                    "",
-                    "",
-                    "",
-                    "",
-                ]),
-                styles: { fontSize: 9, cellPadding: 3 },
-                headStyles: { fillColor: [99, 88, 159] },
-            });
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(filteredData, null, 2));
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
 
-            doc.save("Inquiry-List.pdf");
-        } catch (err) {
-            console.error("Failed to generate PDF:", err);
-        }
-    };
+  const exportPDF = () => {
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("College Request List", 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
 
-    const csvData = [
-        ["Sr. No.", "College Name", "Email", "Faculties", "Branches", "Courses",],
-        ...filteredData.map((item, index) => [
-            index + 1,
-            "",
-            "",
-            "",
-            item.name,
-            "",
-            "",
-            "",
-            "",
+      autoTable(doc, {
+        startY: 30,
+        head: [["Sr. No.", "College Name", "Email", "Faculties", "Branches", "Courses"]],
+        body: filteredData.map((item, index) => [
+          index + 1,
+          item.collegeName || "",
+          item.email || "",
+          item.faculty || "",
+          item.branch || "",
+          item.course || "",
         ]),
-    ];
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [99, 88, 159] },
+      });
 
+      doc.save("College-Requests.pdf");
+    } catch (err) {
+      console.error("PDF generation error:", err);
+    }
+  };
 
-    // action 
-    
-  const handleDelete = (id: number) => alert(`Delete triggered for ID: ${id}`);
-    return (
-        <div className="p-4">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
-                <nav className="text-sm">
-                    <ol className="list-reset flex text-gray-600">
-                        <li><a href="#" className="hover:text-gray-900">CollegeRequest</a></li>
-                        <li><span className="mx-2">/</span></li>
-                        <li className="text-gray-900">CollegeRequest</li>
-                    </ol>
-                </nav>
-                <input
-                    type="text"
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full sm:w-64 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#63589F] focus:border-transparent"
-                />
-            </div>
+  const csvData = [
+    ["Sr. No.", "College Name", "Email", "Faculties", "Branches", "Courses"],
+    ...filteredData.map((item, index) => [
+      index + 1,
+      item.collegeName || "",
+      item.email || "",
+      item.faculty || "",
+      item.branch || "",
+      item.course || "",
+    ]),
+  ];
 
-            {/* Export Buttons */}
-            <div className="grid grid-cols-2 sm:flex gap-2 sm:gap-3 mb-4">
-                <button
-                    onClick={handleCopy}
-                    className="bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
-                >
-                    <Copy className="w-4 h-4" />
-                    <span className="hidden sm:inline">{copySuccess ? "Copied!" : "Copy"}</span>
-                </button>
+  return (
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4 flex-col sm:flex-row gap-4">
+        <nav className="text-sm">
+          <ol className="flex text-gray-600">
+            <li><a href="#"> Master College Requests</a></li>
+            <li className="mx-2">/</li>
+            <li className="text-gray-900">College Requests</li>
+          </ol>
+        </nav>
+        <input
+          type="text"
+          placeholder="Search by college name..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="p-2 border rounded w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-[#63589F]"
+        />
+      </div>
 
-                <CSVLink
-                    data={csvData}
-                    filename="inquiry-list.csv"
-                    className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                >
-                    <FileText className="w-4 h-4" />
-                    <span className="hidden sm:inline">CSV</span>
-                </CSVLink>
+      {/* Export Buttons */}
+      <div className="grid grid-cols-2 sm:flex gap-2 sm:gap-3 mb-4">
+        <button onClick={handleCopy} className="bg-gray-600 text-white px-4 py-2 rounded flex items-center gap-2">
+          <Copy className="w-4 h-4" />
+          <span className="hidden sm:inline">{copySuccess ? "Copied!" : "Copy"}</span>
+        </button>
+        <CSVLink
+          data={csvData}
+          filename="college-requests.csv"
+          className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2"
+        >
+          <FileText className="w-4 h-4" />
+          <span className="hidden sm:inline">CSV</span>
+        </CSVLink>
+        <button onClick={exportPDF} className="bg-red-600 text-white px-4 py-2 rounded flex items-center gap-2">
+          <Download className="w-4 h-4" />
+          <span className="hidden sm:inline">PDF</span>
+        </button>
+        <button onClick={() => window.print()} className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2">
+          <Printer className="w-4 h-4" />
+          <span className="hidden sm:inline">Print</span>
+        </button>
+      </div>
 
-                <button
-                    onClick={exportPDF}
-                    className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
-                >
-                    <Download className="w-4 h-4" />
-                    <span className="hidden sm:inline">PDF</span>
-                </button>
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : (
+        <div className="overflow-x-auto bg-white rounded-lg shadow">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-center text-xs font-bold text-black uppercase hidden md:table-cell">Sr. No.</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-black uppercase hidden md:table-cell">College Name</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-black uppercase hidden md:table-cell">Email</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-black uppercase hidden md:table-cell">Faculties</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-black uppercase hidden md:table-cell">Branches</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-black uppercase hidden md:table-cell">Courses</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-black uppercase hidden md:table-cell">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200 text-sm">
+              {currentRows.map((item, index) => (
+                <tr key={item._id}>
+                  <td className="p-2 text-center hidden sm:table-cell">{indexOfFirstRow + index + 1}</td>
+                  <td className="p-2 text-center hidden sm:table-cell">{item.collegeName}</td>
+                  <td className="p-2 text-center hidden sm:table-cell">{item.email}</td>
+                  <td className="p-2 text-center hidden sm:table-cell">{item.faculty}</td>
+                  <td className="p-2 text-center hidden sm:table-cell">{item.branch}</td>
+                  <td className="p-2 text-center hidden sm:table-cell">{item.course}</td>
+                  <td className="p-2 text-center hidden sm:table-cell">
+                    {/* <button className="text-green-600 hover:text-green-800 mr-2">
+                      <EyeIcon className="w-5 h-5" />
+                    </button> */}
+                    <button
+                      onClick={() => handleDelete(item._id)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-                <button
-                    onClick={() => window.print()}
-                    className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                >
-                    <Printer className="w-4 h-4" />
-                    <span className="hidden sm:inline">Print</span>
-                </button>
-            </div>
+      {/* Pagination */}
+      <div className="flex justify-end mt-4 space-x-2">
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-3 py-1 bg-[#63589F] text-white rounded disabled:opacity-50"
+        >
+          Prev
+        </button>
+        <span className="px-3 py-1 border rounded">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 bg-[#63589F] text-white rounded disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
 
-            <div className="overflow-x-auto bg-white rounded-lg shadow">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-black uppercase tracking-wider">Sr. No.</th>
-                            <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-black uppercase tracking-wider">College Name</th>
-                            <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-black uppercase tracking-wider">Email</th>
-                            <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-black uppercase tracking-wider">Faculties</th>
-                            <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-black uppercase tracking-wider">Branches</th>
-                            <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-black uppercase tracking-wider">Courses</th>
-                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-black dark:text-black uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {currentRows.map((item) => (
-                            <tr key={item.id} className="hover:bg-gray-50 text-sm sm:text-base">
-                                <td className="px-2 sm:px-4 py-2 text-center">{item.id}</td>
-                                <td className="px-2 sm:px-4 py-2 text-center"></td>
-                                <td className="px-2 sm:px-4 py-2"></td>
-                                <td className="px-2 sm:px-4 py-2"></td>
-                                <td className="px-2 sm:px-4 py-2">{item.name}</td>
-                                <td className="px-2 sm:px-4 py-2"></td>
-                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm">
-                                    <button
-                                        onClick={() => handleDelete(item.id)}
-                                        className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 mr-2"
-                                    >
-                                        <EyeIcon className="w-5 h-5" />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(item.id)}
-                                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                                    >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Pagination Controls */}
-            <div className="flex justify-end mt-4 space-x-2">
-                <button
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1 bg-[#63589F] rounded text-white disabled:opacity-50 hover:bg-[#7468B7] transition-colors"
-                >
-                    Prev
-                </button>
-                <span className="px-3 py-1 border rounded">Page {currentPage} of {totalPages}</span>
-                <button
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1 bg-[#63589F] rounded text-white disabled:opacity-50 hover:bg-[#7468B7] transition-colors"
-                >
-                    Next
-                </button>
-            </div>
-
-            {/* Print Styles */}
-            <style>{`
+      {/* Print-only Styles */}
+      <style>{`
         @media print {
           body * {
             visibility: hidden;
@@ -229,8 +254,8 @@ const MasterCollegeRequest = () => {
           }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 export default MasterCollegeRequest;

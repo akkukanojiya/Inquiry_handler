@@ -1,13 +1,27 @@
 
 import {  Clock, HelpCircle, CheckCheck, ShieldClose } from 'lucide-react';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const FacultyDashboard = () => {
+
+  const navigate = useNavigate();
   const inquiries = [
     { icon: HelpCircle, color: "blue", title: "Total Inquiries", count: 150 },
     { icon: Clock, color: "green", title: "Pending Inquiries", count: 24 },
     { icon: CheckCheck, color: "purple", title: "Admitted Inquiries", count: 8 },
     { icon: ShieldClose, color: "orange", title: "Cancel Inquiries", count: 32 },
   ];
+
+
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate("/login");
+    }
+  }, [navigate]);
+  
   return (
     <div className="space-y-6 p-4 sm:p-6 md:p-8 lg:p-10">
       {/* Header */}

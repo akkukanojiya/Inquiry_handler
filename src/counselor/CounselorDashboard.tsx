@@ -1,7 +1,18 @@
 // import React from 'react';
 import {  Clock,   Airplay, CheckCheck, ShieldClose } from 'lucide-react';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const CounselorDashboard = () => {
+
+
+  const navigate = useNavigate();
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate("/masterlogin");
+    }
+  }, [navigate]);
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Counselor Dashboard</h1>

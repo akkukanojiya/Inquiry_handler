@@ -1,33 +1,112 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
   User, Phone, Home, ClipboardList, CheckCircle, Send, GraduationCap,
-  Book, ListChecks, Mail, FileSearch, Church, PlusCircleIcon
+  Book, ListChecks, Mail, FileSearch, Church,
+  BabyIcon,
+  KeyRound
 } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import { useNavigate } from 'react-router-dom';
+
 const InquiryForm = () => {
+
+
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     fullName: '',
-    mobile: '',
-    parentsMobile: '',
+    mobileNo: '',
+    aadharNo: '',
+    dateOfBirth: '',
+    parentsMobileNo: '',
     email: '',
     address: '',
 
     board: '',
-    instituteName: '',
-    enrollmentNo: '',
+    schoolName: '',
+    seatNo: '',
     result: '',
 
     courseName: '',
     referenceName: '',
     admissionCategory: '',
-    udiseNumber: '',
-    priority1: '',
-    priority2: '',
-    priority3: '',
+    category: '',
+    password: '',
+
+    priority_one: '',
+    priority_two: '',
+    priority_three: '',
   });
+
+  const [branches, setBranches] = useState<{ _id: string; branchName: string }[]>([]);
+  const [courses, setCourses] = useState<{ _id: string; courseName: string }[]>([]);
+  const [courseBranches, setCourseBranches] = useState<{ _id: string; branchName: string }[]>([]);
+
+
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:3000/faculty/branch', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setBranches(res.data.branches);
+      } catch (err) {
+        console.error('Error fetching branches:', err);
+        toast.error('Failed to load branches');
+      }
+    };
+    fetchBranches();
+  }, []);
+
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:3000/faculty/course', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setCourses(res.data.courses);
+      } catch (err) {
+        console.error('Error fetching courses:', err);
+        toast.error('Failed to load courses');
+      }
+    };
+    fetchCourses();
+  }, []);
+
+
+  useEffect(() => {
+    const fetchCourseBranches = async () => {
+      if (!formData.courseName) return;
+
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`http://localhost:3000/faculty/courseBranch/${formData.courseName}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setCourseBranches(res.data.branches); // Save branches related to selected course
+      } catch (err) {
+        console.error('Error fetching course branches:', err);
+        toast.error('Failed to load course branches');
+      }
+    };
+
+    fetchCourseBranches();
+  }, [formData.courseName]);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -35,19 +114,43 @@ const InquiryForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     try {
-      const res = await axios.post('http://localhost:5000/api/inquiry', formData);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('User not authenticated!');
+        return;
+      }
+
+      console.log('Form Data being sent:', formData); // Check what you're sending
+
+      const response = await axios({
+        method: 'post',
+        url: 'http://localhost:3000/faculty/inquiry',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        data: formData,
+      });
+
+      console.log('Server response:', response.data);
       toast.success('Form submitted successfully!');
-      console.log(res.data);
-    } catch (err) {
-      console.error('Submission error:', err);
-      toast.error('Submission failed!');
+
+      // Optional: Reset form or navigate
+      // setFormData(initialState);
+      navigate("/appointcounselor");
+
+    } catch (err: any) {
+      console.error('Submission error:', err.response?.data || err.message);
+      toast.error(err.response?.data?.message || 'Submission failed!');
     }
   };
 
+
   return (
     <div className="max-w-4xl mx-auto p-6 md:p-10 bg-white rounded-xl shadow-lg space-y-6 border border-gray-200">
-       <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="top-right" autoClose={5000} />
       <h1 className="text-3xl font-bold flex items-center justify-center gap-3 text-[#63589F]">
         <ClipboardList size={32} /> Inquiry Form
       </h1>
@@ -65,11 +168,19 @@ const InquiryForm = () => {
             </div>
             <div className="flex items-center border rounded-lg p-3 shadow-sm">
               <Phone className="text-[#63589F] mr-3" />
-              <input name="mobile" value={formData.mobile} onChange={handleChange} className="w-full outline-none text-sm" placeholder="Mobile No" />
+              <input name="mobileNo" value={formData.mobileNo} onChange={handleChange} className="w-full outline-none text-sm" placeholder="Mobile No" />
+            </div>
+            <div className="flex items-center border rounded-lg p-3 shadow-sm">
+              <User className="text-[#63589F] mr-3" />
+              <input name="aadharNo" value={formData.aadharNo} onChange={handleChange} className="w-full outline-none text-sm" placeholder="Aadhar No." />
+            </div>
+            <div className="flex items-center border rounded-lg p-3 shadow-sm">
+              <BabyIcon className="text-[#63589F] mr-3" />
+              <input name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} className="w-full outline-none text-sm" placeholder="Date Of Birth" />
             </div>
             <div className="flex items-center border rounded-lg p-3 shadow-sm">
               <Phone className="text-[#63589F] mr-3" />
-              <input name="parentsMobile" value={formData.parentsMobile} onChange={handleChange} className="w-full outline-none text-sm" placeholder="Parents Mobile No" />
+              <input name="parentsMobileNo" value={formData.parentsMobileNo} onChange={handleChange} className="w-full outline-none text-sm" placeholder="Parents Mobile No" />
             </div>
             <div className="flex items-center border rounded-lg p-3 shadow-sm">
               <Mail className="text-[#63589F] mr-3" />
@@ -99,11 +210,11 @@ const InquiryForm = () => {
             </div>
             <div className="flex items-center border rounded-lg p-3 shadow-sm">
               <GraduationCap className="text-[#63589F] mr-3" />
-              <input name="instituteName" value={formData.instituteName} onChange={handleChange} className="w-full outline-none text-sm" placeholder="School / College Name" />
+              <input name="schoolName" value={formData.schoolName} onChange={handleChange} className="w-full outline-none text-sm" placeholder="School / College Name" />
             </div>
             <div className="flex items-center border rounded-lg p-3 shadow-sm">
               <ClipboardList className="text-[#63589F] mr-3" />
-              <input name="enrollmentNo" value={formData.enrollmentNo} onChange={handleChange} className="w-full outline-none text-sm" placeholder="Seat No / Enrollment No" />
+              <input name="seatNo" value={formData.seatNo} onChange={handleChange} className="w-full outline-none text-sm" placeholder="Seat No / Enrollment No" />
             </div>
             <div className="flex items-center border rounded-lg p-3 shadow-sm">
               <CheckCircle className="text-[#63589F] mr-3" />
@@ -118,25 +229,32 @@ const InquiryForm = () => {
             <CheckCircle size={24} /> Course Priority
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-            <div className="flex items-center border rounded-lg p-3 shadow-sm">
+            {/* <div className="flex items-center border rounded-lg p-3 shadow-sm">
               <ListChecks className="text-[#63589F] mr-3" />
               <select name="courseName" value={formData.courseName} onChange={handleChange} className="w-full outline-none text-sm">
                 <option value="">Course Name</option>
-                <option>MCA</option>
-                <option>BE/B.Tech</option>
-                <option>D2D</option>
+                {courses.map((course) => (
+                  <option key={course._id} value={course._id}>
+                    {course.courseName}
+                  </option>
+                ))}
+              </select>
+            </div> */}
+
+            {/* Course Name Dropdown */}
+            <div className="flex items-center border rounded-lg p-3 shadow-sm">
+              <Church className="text-[#63589F] mr-3" />
+              <select name="courseName" value={formData.courseName} onChange={handleChange} className="w-full outline-none text-sm">
+                <option value="">Select Course</option>
+                {courses.map((course) => (
+                  <option key={course._id} value={course._id}>{course.courseName}</option>
+                ))}
               </select>
             </div>
 
             <div className="flex items-center border rounded-lg p-3 shadow-sm">
               <FileSearch className="text-[#63589F] mr-3" />
-              <select name="referenceName" value={formData.referenceName} onChange={handleChange} className="w-full outline-none text-sm">
-                <option value="">Reference Name</option>
-                <option>Facebook</option>
-                <option>Instagram</option>
-                <option>WhatsApp</option>
-                <option>Others</option>
-              </select>
+              <input name="referenceName" value={formData.referenceName} onChange={handleChange} className="w-full outline-none text-sm" placeholder="Reference Name" />
             </div>
 
             <div className="flex items-center border rounded-lg p-3 shadow-sm">
@@ -146,63 +264,79 @@ const InquiryForm = () => {
                 <option>ACPC</option>
                 <option>MQ</option>
                 <option>VQ</option>
+                <option>TFW</option>
+              </select>
+            </div>
+            <div className="flex items-center border rounded-lg p-3 shadow-sm">
+              <Church className="text-[#63589F] mr-3" />
+              <select name="category" value={formData.category} onChange={handleChange} className="w-full outline-none text-sm">
+                <option value="">Category</option>
+                <option>Open</option>
+                <option>SEBC</option>
+                <option>SC</option>
+                <option>ST</option>
+                <option>PH</option>
+                <option>EWS</option>
+
               </select>
             </div>
 
-            <div className="flex items-center border rounded-lg p-3 shadow-sm">
-              <PlusCircleIcon className="text-[#63589F] mr-3" />
-              <input name="udiseNumber" value={formData.udiseNumber} onChange={handleChange} className="w-full outline-none text-sm" placeholder="UDISE number" />
-            </div>
-
-            <div className="flex items-center border rounded-lg p-3 shadow-sm">
-              <ListChecks className="text-[#63589F] mr-3" />
-              <select name="priority1" value={formData.priority1} onChange={handleChange} className="w-full outline-none text-sm">
-                <option value="">Priority 1</option>
-                <option>Computer Science & Engineering</option>
-                <option>Civil Engineering</option>
-                <option>Information Technology</option>
-                <option>Mechanical Engineering</option>
-              </select>
-            </div>
-
-            <div className="flex items-center border rounded-lg p-3 shadow-sm">
-              <ListChecks className="text-[#63589F] mr-3" />
-              <select name="priority2" value={formData.priority2} onChange={handleChange} className="w-full outline-none text-sm">
-                <option value="">Priority 2</option>
-                <option>Computer Science & Engineering</option>
-                <option>Civil Engineering</option>
-                <option>Information Technology</option>
-                <option>Mechanical Engineering</option>
-              </select>
-            </div>
-
-            <div className="flex items-center border rounded-lg p-3 shadow-sm">
-              <ListChecks className="text-[#63589F] mr-3" />
-              <select name="priority3" value={formData.priority3} onChange={handleChange} className="w-full outline-none text-sm">
-                <option value="">Priority 3</option>
-                <option>Computer Science & Engineering</option>
-                <option>Civil Engineering</option>
-                <option>Information Technology</option>
-                <option>Mechanical Engineering</option>
-              </select>
-            </div>
           </div>
         </section>
 
-        {/* Submit/Reset Buttons */}
-        <div className="flex justify-between">
-          <button type="submit" className="w-1/2 md:w-1/4 p-3 bg-[#63589F] text-white rounded-lg hover:bg-[#a39bd1] flex items-center justify-center gap-2 text-lg shadow-md">
-            <Send size={20} /> Submit
-          </button>
-          <button type="reset" className="w-1/2 md:w-1/4 p-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 flex items-center justify-center gap-2 text-lg shadow-md"
-            onClick={() => setFormData({
-              fullName: '', mobile: '', parentsMobile: '', email: '', address: '',
-              board: '', instituteName: '', enrollmentNo: '', result: '',
-              courseName: '', referenceName: '', admissionCategory: '', udiseNumber: '',
-              priority1: '', priority2: '', priority3: '',
-            })}
+        {/* Branch Priorities */}
+        <section>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+            {/* Priority One */}
+            <div className="flex items-center border rounded-lg p-3 shadow-sm">
+            <ListChecks className="text-[#63589F] mr-3" />
+              <select name="priority_one" value={formData.priority_one} onChange={handleChange} className="w-full outline-none text-sm">
+                <option value="">Priority 1</option>
+                {courseBranches.map(branch => (
+                  <option key={branch._id} value={branch._id}>{branch.branchName}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Priority Two */}
+            <div className="flex items-center border rounded-lg p-3 shadow-sm">
+            <ListChecks className="text-[#63589F] mr-3" />
+              <select name="priority_two" value={formData.priority_two} onChange={handleChange} className="w-full outline-none text-sm">
+                <option value="">Priority 2</option>
+                {courseBranches.map(branch => (
+                  <option key={branch._id} value={branch._id}>{branch.branchName}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Priority Three */}
+            <div className="flex items-center border rounded-lg p-3 shadow-sm">
+            <ListChecks className="text-[#63589F] mr-3" />
+              <select name="priority_three" value={formData.priority_three} onChange={handleChange} className="w-full outline-none text-sm">
+                <option value="">Priority 3</option>
+                {courseBranches.map(branch => (
+                  <option key={branch._id} value={branch._id}>{branch.branchName}</option>
+                ))}
+              </select>
+            </div>
+
+
+            <div className="flex items-center border rounded-lg p-3 shadow-sm">
+              <KeyRound className="text-[#63589F] mr-3" />
+              <input name="password" type='password' value={formData.password} onChange={handleChange} className="w-full outline-none text-sm" placeholder="Enter Password" />
+            </div>
+
+          </div>
+        </section>
+
+        {/* Submit Button */}
+        <div className="flex justify-center mt-10">
+          <button
+            type="submit"
+            className="flex items-center gap-2 bg-[#63589F] text-white px-6 py-3 rounded-lg hover:bg-[#4e4482] transition-all shadow-md"
           >
-            Reset
+            <Send size={18} /> Submit Inquiry
           </button>
         </div>
       </form>

@@ -1,9 +1,13 @@
+// Login.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { School2, Lock } from 'lucide-react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const API_URL = 'https://inquiry-handler-api-s.onrender.com/auth/login';
+const getApiUrl = (role: string) =>
+  `http://localhost:3000/auth/login/${role}`;
 
 const Login = () => {
   const [userType, setUserType] = useState('faculty');
@@ -17,16 +21,13 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await axios.post(API_URL, { email, password });
+      const response = await axios.post(getApiUrl(userType), { email, password });
       const { token } = response.data;
 
-      // Store token in localStorage
-      localStorage.setItem('authToken', token);
+      localStorage.setItem('token', token);
+      localStorage.setItem('role', userType); // ✅ Store role
 
-      // Store token in cookies
-      document.cookie = `authToken=${token}; path=/; secure; HttpOnly`;
-
-      // Navigate based on user type
+      // Navigate and refresh after 300ms
       switch (userType) {
         case 'faculty':
           navigate('/faculty');
@@ -37,16 +38,24 @@ const Login = () => {
         case 'counselor':
           navigate('/counselor');
           break;
+        case 'student':
+          navigate('/studentprofile');
+          break;
       }
+
+      // Delay reload to let navigate complete
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
+       toast.success("Login successful!");
     } catch (err) {
       setError('Invalid email or password. Please try again.');
     }
   };
 
-  
-
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
+      <ToastContainer />
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
           <School2 className="h-12 w-12 text-indigo-600 mb-2" />
@@ -69,6 +78,7 @@ const Login = () => {
               <option value="faculty">Faculty</option>
               <option value="college">College</option>
               <option value="counselor">Counselor</option>
+              <option value="student">Student</option>
             </select>
           </div>
 
@@ -123,11 +133,9 @@ const Login = () => {
             type="submit"
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            Sign in
+            Log in
           </button>
         </form>
-
-         
       </div>
     </div>
   );

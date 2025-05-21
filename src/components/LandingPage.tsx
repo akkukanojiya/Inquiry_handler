@@ -11,7 +11,64 @@ import Feature2 from '../img/features-illustration-2.jpg'
 import Feature3 from '../img/features-illustration-3.jpg'
 import { FaChartArea, FaCircleArrowRight } from "react-icons/fa6";
 import { LuBriefcaseBusiness } from "react-icons/lu";
+import axios from "axios";
+// import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 const LandingPage: React.FC = () => {
+   
+// delay 
+ 
+
+useEffect(() => {
+    // Auto refresh once when the page loads
+    const hasRefreshed = sessionStorage.getItem('hasRefreshed');
+    if (!hasRefreshed) {
+      sessionStorage.setItem('hasRefreshed', 'true');
+      window.location.reload();
+    }
+  }, []);
+
+// delay end 
+
+    // contact form 
+    // const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      await axios.post('http://localhost:3000/contact-form', formData);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+      toast.success('Thank you for contacting us!', {
+        position: 'top-center',
+        autoClose: 5000,
+        
+      });
+       
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast.error('Failed to send message. Please try again.', {
+        position: 'top-center',
+        autoClose: 3000,
+      });
+    }
+  };
+
+    
+    // contact form end
+
 
     const [activeTab, setActiveTab] = useState("college");
 
@@ -687,17 +744,20 @@ const LandingPage: React.FC = () => {
 
                             {/* Contact Form */}
                             <div className="lg:w-3/5 w-full">
+                            <ToastContainer />
                                 <div className="bg-white p-6 rounded-lg shadow-md" data-aos="fade-up" data-aos-delay={300}>
                                     <h3 className="text-xl font-semibold mb-4">Get In Touch</h3>
                                     <p className="text-gray-600 mb-6">
                                         Have a question? Fill out the form below, and we'll get back to you as soon as possible.
                                     </p>
 
-                                    <form action="contactUs" method="post">
+                                    <form onSubmit={handleSubmit}>
                                         <div className="grid md:grid-cols-2 gap-4 mb-4">
                                             <input
                                                 type="text"
                                                 name="name"
+                                                value={formData.name}
+                                                onChange={handleChange}
                                                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Your Name"
                                                 required
@@ -705,6 +765,8 @@ const LandingPage: React.FC = () => {
                                             <input
                                                 type="email"
                                                 name="email"
+                                                value={formData.email}
+                                                onChange={handleChange}
                                                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Your Email"
                                                 required
@@ -714,6 +776,8 @@ const LandingPage: React.FC = () => {
                                             <input
                                                 type="text"
                                                 name="subject"
+                                                value={formData.subject}
+                                                onChange={handleChange}
                                                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Subject"
                                                 required
@@ -722,6 +786,8 @@ const LandingPage: React.FC = () => {
                                         <div className="mb-4">
                                             <textarea
                                                 name="message"
+                                                value={formData.message}
+                                                onChange={handleChange}
                                                 rows={4}
                                                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Message"
@@ -731,7 +797,7 @@ const LandingPage: React.FC = () => {
                                         <div className="text-center">
                                             <button
                                                 type="submit"
-                                                className="bg-[#63589F] text-white px-6 py-3 rounded-md hover:bg-[#a39bd1]transition duration-300"
+                                                className="bg-[#63589F] text-white px-6 py-3 rounded-md hover:bg-[#a39bd1] transition duration-300"
                                             >
                                                 Send Message
                                             </button>

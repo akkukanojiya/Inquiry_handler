@@ -1,48 +1,83 @@
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import Logo from '../img/ih-logo.png'
+import Logo from '../img/ih-logo.png';
+import axios from 'axios'; // Import axios
+import { toast, ToastContainer } from 'react-toastify'; // Ensure you have react-toastify installed for toast notifications
+import 'react-toastify/dist/ReactToastify.css';
 interface FormData {
   collegeName: string;
-  facultyCount: string;
-  mobileNo: string;
-  branchCount: string;
+  faculty: string;
+  mobile: string;
+  branch: string;
+  course: string;
   email: string;
-  courseCount: string;
+  counselor: string;
   address: string;
-  questions: string;
+  question: string;
 }
 
 const CollegeRegistrationForm = () => {
   const [formData, setFormData] = useState<FormData>({
     collegeName: '',
-    facultyCount: '',
-    mobileNo: '',
-    branchCount: '',
+    faculty: '',
+    mobile: '',
     email: '',
-    courseCount: '',
     address: '',
-    questions: '',
+    branch: '',
+    course: '',
+    counselor: '',
+
+    question: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Handle form submission logic here
+    try {
+      // Sending data via POST request
+      const response = await axios.post('http://localhost:3000/college-request', formData);
+
+      // Resetting form data after successful submission
+      setFormData({
+        collegeName: '',
+        faculty: '',
+        mobile: '',
+        email: '',
+        address: '',
+        branch: '',
+        course: '',
+        counselor: '',
+        question: '',
+      });
+
+      // Showing success toast notification
+      toast.success('Thank you for Registration!', {
+        position: 'top-center',
+        autoClose: 3000,
+      });
+      console.log(response.data.data);  // You can also log response data if needed
+    } catch (error) {
+      console.error('Submission error:', error);
+      // Showing error toast notification
+      toast.error('Failed to send message. Please try again.', {
+        position: 'top-center',
+        autoClose: 3000,
+      });
+    }
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <ToastContainer />
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row">
-
           {/* Left side - Image */}
           <div className="md:w-1/2 relative flex flex-col justify-start items-center mt-20">
             <div className="absolute inset-0 bg-gradient-to-t from-[#afa4eb] to-transparent"></div>
@@ -55,16 +90,13 @@ const CollegeRegistrationForm = () => {
                   animation: "bounceSlow 2.5s infinite ease-in-out",
                 }}
               />
-
-
-
               <style>
                 {`
-      @keyframes bounceSlow {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-10px); }
-      }
-    `}
+                  @keyframes bounceSlow {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-10px); }
+                  }
+                `}
               </style>
             </div>
 
@@ -75,10 +107,8 @@ const CollegeRegistrationForm = () => {
             </p>
           </div>
 
-
-
           {/* Right side - Form */}
-          <div className="md:w-1/2 p-8 ">
+          <div className="md:w-1/2 p-8">
             <h2 className="text-3xl font-bold text-gray-800 mb-6 ">College Registration</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -96,12 +126,12 @@ const CollegeRegistrationForm = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="facultyCount" className="block text-sm font-medium text-gray-700">Number of Faculty *</label>
+                  <label htmlFor="faculty" className="block text-sm font-medium text-gray-700">Number of Faculty *</label>
                   <input
                     type="number"
-                    id="facultyCount"
-                    name="facultyCount"
-                    value={formData.facultyCount}
+                    id="faculty"
+                    name="faculty"
+                    value={formData.faculty}
                     onChange={handleChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#63589F] focus:ring focus:ring-[#63589F] focus:ring-opacity-50"
                     required
@@ -109,12 +139,12 @@ const CollegeRegistrationForm = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="mobileNo" className="block text-sm font-medium text-gray-700">Mobile Number *</label>
+                  <label htmlFor="mobile" className="block text-sm font-medium text-gray-700">Mobile Number *</label>
                   <input
                     type="tel"
-                    id="mobileNo"
-                    name="mobileNo"
-                    value={formData.mobileNo}
+                    id="mobile"
+                    name="mobile"
+                    value={formData.mobile}
                     onChange={handleChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#63589F] focus:ring focus:ring-[#63589F] focus:ring-opacity-50"
                     required
@@ -124,12 +154,12 @@ const CollegeRegistrationForm = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="branchCount" className="block text-sm font-medium text-gray-700">Number of Branches *</label>
+                  <label htmlFor="counselor" className="block text-sm font-medium text-gray-700">Number of counselores *</label>
                   <input
                     type="number"
-                    id="branchCount"
-                    name="branchCount"
-                    value={formData.branchCount}
+                    id="counselor"
+                    name="counselor"
+                    value={formData.counselor}
                     onChange={handleChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#63589F] focus:ring focus:ring-[#63589F] focus:ring-opacity-50"
                     required
@@ -137,17 +167,33 @@ const CollegeRegistrationForm = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="courseCount" className="block text-sm font-medium text-gray-700">Number of Courses *</label>
+                  <label htmlFor="course" className="block text-sm font-medium text-gray-700">Number of Courses *</label>
                   <input
                     type="number"
-                    id="courseCount"
-                    name="courseCount"
-                    value={formData.courseCount}
+                    id="course"
+                    name="course"
+                    value={formData.course}
                     onChange={handleChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#63589F] focus:ring focus:ring-[#63589F] focus:ring-opacity-50"
                     required
                   />
                 </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="counselor" className="block text-sm font-medium text-gray-700">Number of Branch *</label>
+                  <input
+                    type="number"
+                    id="branch"
+                    name="branch"
+                    value={formData.branch}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#63589F] focus:ring focus:ring-[#63589F] focus:ring-opacity-50"
+                    required
+                  />
+                </div>
+
+               
               </div>
 
               <div>
@@ -177,11 +223,11 @@ const CollegeRegistrationForm = () => {
               </div>
 
               <div>
-                <label htmlFor="questions" className="block text-sm font-medium text-gray-700">Any Questions?</label>
+                <label htmlFor="question" className="block text-sm font-medium text-gray-700">Any question?</label>
                 <textarea
-                  id="questions"
-                  name="questions"
-                  value={formData.questions}
+                  id="question"
+                  name="question"
+                  value={formData.question}
                   onChange={handleChange}
                   rows={3}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#63589F] focus:ring focus:ring-[#63589F] focus:ring-opacity-50"

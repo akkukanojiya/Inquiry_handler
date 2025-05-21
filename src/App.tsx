@@ -1,5 +1,7 @@
 // import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+// import RoleBasedRoute from './components/RoleBasedRoute';
+
 import Navbar from './components/Navbar';
 import FacultyDashboard from './faculty/FacultyDashboard';
 import CollegeDashboard from './college/CollegeDashboard';
@@ -35,20 +37,29 @@ import MasterContactDetails from './master/ContactDetails';
 import MasterLogin from './master/MasterLogin';
 import MasterLogout from './master/MasterLogout';
 import MasterCollegeForm from './master/CollegeForm';
+import AppointCounselorForm from './faculty/AppointCounselorForm';
+import ConformationForm from './counselor/CoformationForm';
+import StudentProfile from './student/StudentProfile';
+import EditInquiryForm from './college/EditInquiryForm';
+import AddRemarks from './counselor/AddRemarks';
+import EditConformation from './counselor/EditConformation';
+import FileUploader from './student/UploadDocument';
+import ViewDocuments from './student/ViewDocument';
+import EditCounselorForm from './college/EditCounselorForm';
 // import ContactUs from './components/ContactUs';
 
 function App() {
   // const location = useLocation();
-  const showNavbar = !["/landingpage", "/login", "/logout", "/masterlogin", "/collegeregistrationform"].includes(location.pathname);
+  const showNavbar = !["/landingpage", "/login", "/logout", "/masterlogin", "/masterlogout","/collegeregistrationform"].includes(location.pathname);
 
 
 
   return (
     <ThemeProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="flex flex-col min-h-screen bg-gray-50">
           {showNavbar &&  <Navbar />}
-          <div className={`min-h-screen ${showNavbar ? "lg:ml-64" : ""}`}>
+          <div className={`flex flex-col min-h-screen ${showNavbar ? "lg:ml-64" : ""}`}>
             {showNavbar && <Header />}
             <div className="container mx-auto px-4 py-8">
               <Routes>
@@ -71,13 +82,16 @@ function App() {
                 {/* college dashboard */}
                 <Route path="/college" element={<CollegeDashboard />} />
                 <Route path="/datatable" element={<DataTable />} />
+                <Route path="/editinquiryform/:id" element={<EditInquiryForm />} />
 
                 <Route path='/counselorlist' element={<CounselorData />} />
                 <Route path='/counselorform' element={<CounselorForm />} />
+                <Route path="/editcounselor/:id" element={<EditCounselorForm />} />
+
 
                 <Route path='/facultylist' element={<Faculties />} />
                 <Route path='/facultiesform' element={<FacultiesForm />} />
-
+                          
                 <Route path="/courseslist" element={<Courses />} />
                 <Route path="/coursesform" element={<CoursesForm />} />
 
@@ -87,14 +101,25 @@ function App() {
                 {/* FacultyDashboard */}
                 <Route path="/faculty" element={<FacultyDashboard />} />
                 <Route path="/inquiryform" element={<InquiryForm />} />
-
+               
                 <Route path="/appointcounselor" element={<AppointCounselor />} />
+                <Route path="/appointcounselorform/:id" element={<AppointCounselorForm />} />
 
+
+                  {/* student dashboard  */}
+                <Route path="/studentprofile" element={<StudentProfile />} />
+                <Route path="/fileupload" element={<FileUploader />} />
+                <Route path="/viewdocument" element={<ViewDocuments />} />
+                  
+             {/* counselor dashboard  */}
                 <Route path="/counselor" element={<CounselorDashboard />} />
                 <Route path="/inquiryconformation" element={<InquiryConformation />} />
+                <Route path="/conformationform/:id" element={<ConformationForm />} />
+                <Route path="/editconformation/:id" element={<EditConformation />} />
                 <Route path="/demoinquiryconformation" element={<DemoForm />} />
                 <Route path="/registration" element={<UserRegistrationForm />} />
-                {/* <Route path="/contactus" element={<ContactUs />} /> */}
+                <Route path="/addremarks/:id" element={<AddRemarks />} />
+              
                 <Route path="/landingpage" element={<LandingPage />} />
                 <Route path="/start" element={<Start />} />
                 <Route path="/" element={<Navigate to="/landingpage" replace />} />

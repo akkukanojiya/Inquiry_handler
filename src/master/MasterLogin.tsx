@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { School2, Lock } from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 const MasterLogin = () => {
   const [formData, setFormData] = useState({
@@ -17,42 +19,54 @@ const MasterLogin = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+  
     if (!formData.email || !formData.password) {
-      alert("Please enter your email and password.");
+      toast.warn("Please enter your email and password.");
       return;
     }
-
+  
     try {
       const response = await axios.post(
-        "https://inquiry-handler-api-s.onrender.com/auth/login",
+        'http://localhost:3000/auth/login/master',
         formData,
         {
-          withCredentials: true, // allows cookies
-          headers: {
-            "Content-Type": "application/json",
-          },
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" },
         }
       );
-
-      const { token } = response.data;
-
-      // Store token in localStorage
-      localStorage.setItem("token", token);
-
-      // Optional: store user info if needed
-      // localStorage.setItem("user", JSON.stringify(response.data.user));
-
-      console.log("Login successful:", response.data);
-
-      navigate("/masterdashboard"); // Redirect to dashboard
+  
+      const token = response?.data?.token;
+      const role = "master";
+  
+      if (token && role) {
+        localStorage.setItem("token", token);
+        localStorage.setItem("role", role);
+  
+        toast.success("Login successful!");
+  
+        // Navigate to dashboard after toast shows
+        setTimeout(() => {
+          navigate("/masterdashboard");
+  
+          // Refresh after another 300ms to re-render UI correctly
+          setTimeout(() => {
+            window.location.reload();
+          }, 300);
+        }, 500);
+      } else {
+        toast.error("Invalid login response");
+      }
+  
     } catch (error: any) {
       console.error("Login failed:", error.response?.data || error.message);
-      alert(error.response?.data?.message || "Login failed. Please try again.");
+      toast.error(error.response?.data?.message || "Login failed. Please try again.");
     }
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <div className="flex flex-col items-center mb-6">
           <School2 className="h-12 w-12 text-indigo-600 mb-2" />
@@ -90,10 +104,15 @@ const MasterLogin = () => {
 
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
               <label className="ml-2 block text-sm text-gray-900">Remember me</label>
             </div>
-            <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">Forgot password?</a>
+            <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+              Forgot password?
+            </a>
           </div>
 
           <button
